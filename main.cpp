@@ -75,9 +75,11 @@ int main(int argc, char *argv[]) {
         }
 
         // Sending robot commands for robot 0, 1 and 2
-        actuatorClient->sendCommand(0, 0, 0);
-        actuatorClient->sendCommand(1, 0, 0);
-        actuatorClient->sendCommand(2, 0, 0);
+        if(refereeClient->getLastFoul() == VSSRef::Foul::GAME_ON) {
+            actuatorClient->sendCommand(0, -10, -10);
+            actuatorClient->sendCommand(1, 0, 0);
+            actuatorClient->sendCommand(2, 0, 0);
+        }
 
         // If is kickoff, send this test frame!
         if(refereeClient->getLastFoul() == VSSRef::Foul::KICKOFF) {
