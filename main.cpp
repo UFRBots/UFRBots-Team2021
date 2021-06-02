@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
     // Setting our color as BLUE at left side
     VSSRef::Color ourColor = VSSRef::Color::YELLOW;
     bool ourSideIsLeft = false;
+    bool game_on = false;
 
     // Desired frequency (in hz)
     float freq = 60.0;
@@ -73,10 +74,23 @@ int main(int argc, char *argv[]) {
                 std::cout << robotDebugStr.toStdString() + '\n';
             }
         }
-
+        
+        if (refereeClient->getLastFoul() == VSSRef::Foul::GAME_ON)
+        {
+            game_on = true;
+        }
+        else{
+            game_on = false;
+        }
+        
         // Sending robot commands for robot 0, 1 and 2
-        if(refereeClient->getLastFoul() == VSSRef::Foul::GAME_ON) {
+        if(game_on) {
             actuatorClient->sendCommand(0, -10, -10);
+            actuatorClient->sendCommand(1, 0, 0);
+            actuatorClient->sendCommand(2, 0, 0);
+        }
+        else{
+            actuatorClient->sendCommand(0, 0, 0);
             actuatorClient->sendCommand(1, 0, 0);
             actuatorClient->sendCommand(2, 0, 0);
         }
