@@ -48,3 +48,4 @@ void ActuatorClient::sendCommand(quint8 robotId, float wheelLeft, float wheelRig
 void ActuatorClient::runClient() {
     // Empty (sendCommand is our run)
 }
+

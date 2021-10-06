@@ -11,7 +11,7 @@ public:
     using Client::Client;
     void setTeamColor(VSSRef::Color teamColor);
     void sendCommand(quint8 robotId, float wheelLeft, float wheelRight);
-
+  
 private:
     // Internal
     VSSRef::Color _teamColor;
