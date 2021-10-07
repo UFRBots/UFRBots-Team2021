@@ -69,7 +69,7 @@ void PID(fira_message::Robot robot, Objective objective, int index, ActuatorClie
         }
     }
     //actuatorClient.sendCommand(leftMotorSpeed, rightMotorSpeed, Team_UFRBots, index);
-    actuatorClient.sendCommand(index, leftMotorSpeed, rightMotorSpeed);
+    actuatorClient->sendCommand(index, leftMotorSpeed, rightMotorSpeed);
 }
 
 int estado = APROXIMA;
@@ -283,7 +283,7 @@ int main(int argc, char *argv[]) {
             fira_message::Frame lastFrame = lastEnv.frame();
 
             // Informacoes da bola
-            fira_message::Ball ball = lastFrame.ball();
+            ball = lastFrame.ball();
             ball.set_x((length + ball.x()) * 100);
             ball.set_y((width + ball.y()) * 100);
 
@@ -435,12 +435,101 @@ int main(int argc, char *argv[]) {
             //GOLEIRO AZUL
             if(ball.x() <= 40 && ball.y() >= 28 && ball.y() <= 102)
             {
-                Objective defensor = defineObjective(robot0, ball);
-                PID(robot0, defensor, 0, actuatorClient, Team_UFRBots, 0);
+                Objective first = defineObjective(robot0, ball);
+                Objective second = Objective(40, 110, 40);
+                Objective third = Objective(40, 20, 40);
+                PID(robot0, first, 0, actuatorClient, Team_UFRBots, 10);
+                PID(robot1, second, 1, actuatorClient, Team_UFRBots, 0);
+                PID(robot2, third, 2, actuatorClient, Team_UFRBots, 0);
+                
+            }
+            else if(ball.y() > 86 && ball.x() > 45 && ball.x() < 65)
+            {
+                Objective first = Objective(20, 65, 0);
+                Objective second = defineObjective(robot1, ball);
+                Objective third = Objective(40, 20, 40);
+                PID(robot0, first, 0, actuatorClient, Team_UFRBots, 0);
+                PID(robot1, second, 1, actuatorClient, Team_UFRBots, 0);
+                PID(robot2, third, 2, actuatorClient, Team_UFRBots, 0);
             }
 
+            else if(ball.y() < 44 && ball.x() > 45 && ball.x() < 65)
+            {
+                Objective first = Objective(20, 65, 0);
+                Objective second = Objective(40, 110, 40);
+                Objective third = defineObjective(robot2, ball);
+                PID(robot0, first, 0, actuatorClient, Team_UFRBots, 0);
+                PID(robot1, second, 1, actuatorClient, Team_UFRBots, 0);
+                PID(robot2, third, 2, actuatorClient, Team_UFRBots, 0);
+            }
 
-        }
+            else if(ball.x() > 45 && ball.y() >= 44 && ball.y() <= 86)
+            {
+                Objective first = Objective(20, ball.y(), 0);
+                Objective second = Objective(40, 110, 40);
+                Objective third = Objective(40, 20, 40);
+                PID(robot0, first, 0, actuatorClient, Team_UFRBots, 10);
+                PID(robot1, second, 1, actuatorClient, Team_UFRBots, 0);
+                PID(robot2, third, 2, actuatorClient, Team_UFRBots, 0);
+            }
+
+            //Robô 1
+            else if (penalty)
+            {
+                actuatorClient->sendCommand(1, 50, 50);
+                penalty = false;
+            }
+            //Se robo 1 no campo de ataque e bola no lado esquerdo
+            else if(ball.y() >= 65 && ball.x() > 30) 
+            {
+                Objective o = defineObjective(robot1, ball);
+                PID(robot1, o, 1, actuatorClient, Team_UFRBots, 10);
+            }
+            //Se robo 2 no campo de ataque e bola no lado direito
+            else if(ball.y() < 64 && ball.x() > 30) {
+                Objective o = defineObjective(robot2, ball);
+                PID(robot2, o, 2, actuatorClient, Team_UFRBots, 10);
+            }
+
+            else if(ball.y() > 65)
+            {
+                if(robot0.y() >= 86)
+                {
+                    actuatorClient->sendCommand(0, 30, -30);
+                }
+                else
+                {
+                    Objective parado = Objective(20, 86, 0);
+                    PID(robot0, parado, 0, actuatorClient, Team_UFRBots, 0);
+                }
+            }
+            else if(ball.y() <= 65)
+            {
+                if(robot0.y() <= 44)
+                {
+                    actuatorClient->sendCommand(0, 30, -30);
+                }
+                else
+                {
+                    Objective parado = Objective(20, 44, 0);
+                    PID(robot0, parado, 0, actuatorClient, Team_UFRBots, 0);
+                }
+            }
+            
+            // else
+            // {
+            //     Objective parado = Objective(20, 65, 0); // parado no meio do gol
+            //     Objective second = Objective(ball.x()+20, 110, 40);
+            //     Objective third = Objective(ball.x()+20, 20, 40);
+            //     PID(robot0, parado, 0, actuatorClient, Team_UFRBots, 0);
+            //     PID(robot1, second, 1, actuatorClient, Team_UFRBots, 0);
+            //     PID(robot2, third, 2, actuatorClient, Team_UFRBots, 0);
+            // }
+
+            
+
+
+            }
         else{
             actuatorClient->sendCommand(0, 0, 0);
             actuatorClient->sendCommand(1, 0, 0);
