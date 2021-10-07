@@ -10,7 +10,7 @@
 #include "functions.cpp"
 
 
-void PID(fira_message::Robot robot, Objective objective, int index, ActuatorClient &actuatorClient, bool Team_UFRBots, double acrescimo)
+void PID(fira_message::Robot robot, Objective objective, int index, ActuatorClient *actuatorClient, bool Team_UFRBots, double acrescimo)
 {
     double Kp = 20;
     double Kd = 2.5;
@@ -69,13 +69,14 @@ void PID(fira_message::Robot robot, Objective objective, int index, ActuatorClie
         }
     }
     //actuatorClient.sendCommand(leftMotorSpeed, rightMotorSpeed, Team_UFRBots, index);
-    actuatorClient->sendCommand(index, leftMotorSpeed, rightMotorSpeed);
+    actuatorClient.sendCommand(index, leftMotorSpeed, rightMotorSpeed);
 }
 
 int estado = APROXIMA;
 int estadoant;
 double x, y, ang;
 double x_in, y_in;
+
 
 Objective defineObjective(fira_message::Robot robot, fira_message::Ball ball)
 {
@@ -174,10 +175,67 @@ Objective defineObjective(fira_message::Robot robot, fira_message::Ball ball)
     }
 }
 
+int getQuadrantByPosition(fira_message::Ball ball)
+{
+    int quadrante = 0;
 
+    if(ball.x() >= 85 && ball.y() >= 65)
+    {
+        quadrante = 1;
+    }
+    else if (ball.x() < 85 && ball.y() >= 65)
+    {
+        quadrante = 2;
+    }
+    else if (ball.x() < 85 && ball.y() < 65)
+    {
+        quadrante = 3;
+    }
+    else if (ball.x() >= 85 && ball.y() < 65)
+    {
+        quadrante = 4;
+    }
+    
+    return quadrante;
+}
 
 int main(int argc, char *argv[]) {
     QCoreApplication a(argc, argv);
+
+    (void)argc;
+    (void)argv;
+
+    std::string BLUE = "BLUE";
+    std::string YELLOW = "YELLOW";
+
+    std::string color = argv[1]; //YELLOW or BLUE
+    // std::string multicast_ip = argv[2]; // 224.0.0.1
+    // QString multicast_ip_q = argv[2];// 224.0.0.1
+    // QString command_ip = argv[3]; //127.0.0.1
+    // int command_port = atoi(argv[4]); //20011
+    // int vision_port = atoi(argv[5]); //10002
+    // int referee_port = atoi(argv[6]); //10003
+    // int replacer_port = atoi(argv[7]); //10004
+
+    //    Time amarelo
+    bool Team_UFRBots = false;
+    VSSRef::Color ourColor = VSSRef::Color::BLUE;
+    bool ourSideIsLeft = true;
+
+    if (color.compare(YELLOW) == 0)
+    {
+        //    Time azul
+        Team_UFRBots = true;
+        ourColor = VSSRef::Color::YELLOW;
+        ourSideIsLeft = false;
+    }
+    
+    //Docker
+    //sudo sh ufrbots.sh color multicast_ip command_ip command_port vision_port referee_port replacer_port
+    //sudo sh ufrbots.sh BLUE 224.5.23.2 127.0.0.1 20011 10002 10003 10004
+
+    //Local
+    // ./main BLUE 224.5.23.2 127.0.0.1 20011 10002 10003 10004
 
     // Starting timer
     Timer timer;
@@ -189,8 +247,6 @@ int main(int argc, char *argv[]) {
     ActuatorClient *actuatorClient = new ActuatorClient("127.0.0.1", 20011);
 
     // Setting our color as BLUE at left side
-    VSSRef::Color ourColor = VSSRef::Color::YELLOW;
-    bool ourSideIsLeft = false;
     bool game_on = false;
     bool penalty = false;
 
@@ -204,6 +260,13 @@ int main(int argc, char *argv[]) {
     double width, length;
     width = 1.3 / 2.0;
     length = 1.7 / 2.0;
+
+    bool debug = true;
+
+    fira_message::Ball ball;
+    fira_message::Robot robot0;
+    fira_message::Robot robot1;
+    fira_message::Robot robot2;
 
     while(1) {
         // Start timer
@@ -220,63 +283,81 @@ int main(int argc, char *argv[]) {
             fira_message::Frame lastFrame = lastEnv.frame();
 
             // Informacoes da bola
-            fira_message::Ball ball = detection.ball();
+            fira_message::Ball ball = lastFrame.ball();
             ball.set_x((length + ball.x()) * 100);
             ball.set_y((width + ball.y()) * 100);
 
             if (ourColor == VSSRef::Color::BLUE)
             {
-                for (int i = 0; i < 3; i++)
-                {
-                    fira_message::Robot robot = detection.robots_blue(i); // Detecção do robo
-                    robot.set_x((length + robot.x()) * 100); // Convertendo para centimetros
-                    robot.set_y((width + robot.y()) * 100);
-                    robot.set_orientation(to180range(robot.orientation()));
-                }
+                
+                robot0 = lastFrame.robots_blue(0); // Detecção do robo
+                robot0.set_x((length + robot0.x()) * 100); // Convertendo para centimetros
+                robot0.set_y((width + robot0.y()) * 100);
+                robot0.set_orientation(to180range(robot0.orientation()));
 
+                robot1 = lastFrame.robots_blue(1); // Detecção do robo
+                robot1.set_x((length + robot1.x()) * 100); // Convertendo para centimetros
+                robot1.set_y((width + robot1.y()) * 100);
+                robot1.set_orientation(to180range(robot1.orientation()));
+
+                robot2 = lastFrame.robots_blue(2); // Detecção do robo
+                robot2.set_x((length + robot2.x()) * 100); // Convertendo para centimetros
+                robot2.set_y((width + robot2.y()) * 100);
+                robot2.set_orientation(to180range(robot2.orientation()));
             }
             else
             {
-                for (int i = 0; i < 3; i++)
-                {
-                    fira_message::Robot robot = detection.robots_yellow(i); // Detecção do robo
-                    robot.set_x((length + robot.x()) * 100); // Convertendo para centimetros
-                    robot.set_y((width + robot.y()) * 100);
-                    robot.set_orientation(to180range(robot.orientation()));
-                }
+                robot0 = lastFrame.robots_yellow(0); // Detecção do robo
+                robot0.set_x((length + robot0.x()) * 100); // Convertendo para centimetros
+                robot0.set_y((width + robot0.y()) * 100);
+                robot0.set_orientation(to180range(robot0.orientation()));
+
+                robot1 = lastFrame.robots_yellow(1); // Detecção do robo
+                robot1.set_x((length + robot1.x()) * 100); // Convertendo para centimetros
+                robot1.set_y((width + robot1.y()) * 100);
+                robot1.set_orientation(to180range(robot1.orientation()));
+
+                robot2 = lastFrame.robots_yellow(2); // Detecção do robo
+                robot2.set_x((length + robot2.x()) * 100); // Convertendo para centimetros
+                robot2.set_y((width + robot2.y()) * 100);
+                robot2.set_orientation(to180range(robot2.orientation()));
             }
             
             
             
+            if (debug)
+            {
+                // Debugging ball
+                std::cout << "\n===== BALL =====\n";
+                QString ballDebugStr = QString("Ball x: %1 y: %2")
+                                    .arg(ball.x())
+                                    .arg(ball.y());
+                std::cout << ballDebugStr.toStdString() + '\n';
 
-        //     // Debugging ball
-        //     std::cout << "\n===== BALL =====\n";
-        //     QString ballDebugStr = QString("Ball x: %1 y: %2")
-        //                         .arg(lastFrame.ball().x())
-        //                         .arg(lastFrame.ball().y());
-        //     std::cout << ballDebugStr.toStdString() + '\n';
+                // Debugging blue robots
+                std::cout << "\n===== BLUE TEAM =====\n";
+                for(int i = 0; i < lastFrame.robots_blue_size(); i++) {
+                    QString robotDebugStr = QString("Robot %1 -> x: %2 y: %3 ori: %4")
+                            .arg(lastFrame.robots_blue(i).robot_id())
+                            .arg(lastFrame.robots_blue(i).x())
+                            .arg(lastFrame.robots_blue(i).y())
+                            .arg(lastFrame.robots_blue(i).orientation());
+                    std::cout << robotDebugStr.toStdString() + '\n';
+                }
 
-        //     // Debugging blue robots
-        //     std::cout << "\n===== BLUE TEAM =====\n";
-        //     for(int i = 0; i < lastFrame.robots_blue_size(); i++) {
-        //         QString robotDebugStr = QString("Robot %1 -> x: %2 y: %3 ori: %4")
-        //                 .arg(lastFrame.robots_blue(i).robot_id())
-        //                 .arg(lastFrame.robots_blue(i).x())
-        //                 .arg(lastFrame.robots_blue(i).y())
-        //                 .arg(lastFrame.robots_blue(i).orientation());
-        //         std::cout << robotDebugStr.toStdString() + '\n';
-        //     }
-
-        //     // Debugging yellow robots
-        //     std::cout << "\n===== YELLOW TEAM =====\n";
-        //     for(int i = 0; i < lastFrame.robots_yellow_size(); i++) {
-        //         QString robotDebugStr = QString("Robot %1 -> x: %2 y: %3 ori: %4")
-        //                 .arg(lastFrame.robots_yellow(i).robot_id())
-        //                 .arg(lastFrame.robots_yellow(i).x())
-        //                 .arg(lastFrame.robots_yellow(i).y())
-        //                 .arg(lastFrame.robots_yellow(i).orientation());
-        //         std::cout << robotDebugStr.toStdString() + '\n';
-        //     }
+                // Debugging yellow robots
+                std::cout << "\n===== YELLOW TEAM =====\n";
+                for(int i = 0; i < lastFrame.robots_yellow_size(); i++) {
+                    QString robotDebugStr = QString("Robot %1 -> x: %2 y: %3 ori: %4")
+                            .arg(lastFrame.robots_yellow(i).robot_id())
+                            .arg(lastFrame.robots_yellow(i).x())
+                            .arg(lastFrame.robots_yellow(i).y())
+                            .arg(lastFrame.robots_yellow(i).orientation());
+                    std::cout << robotDebugStr.toStdString() + '\n';
+                }
+            }
+            
+        
         }
 
         VSSRef::Quadrant quadrante = refereeClient->getLastFoulQuadrant();
@@ -293,7 +374,15 @@ int main(int argc, char *argv[]) {
             replacerClient->sendFrame();
         }
 
-
+        if (tipo_falta == VSSRef::Foul::PENALTY_KICK)
+        {
+            penalty = true;
+        }
+        else
+        {
+            penalty = false;
+        }
+        
         if (quadrante == VSSRef::Quadrant::QUADRANT_1)
         {
             replacerClient->placeRobot(0, ourSideIsLeft ? -0.675 : 0.675, 0.15, 0);
@@ -339,19 +428,24 @@ int main(int argc, char *argv[]) {
         else{
             game_on = false;
         }
-        
+    
         // Sending robot commands for robot 0, 1 and 2
-        // if(game_on) {
-        //     actuatorClient->sendCommand(0, -10, -10);
-        //     actuatorClient->sendCommand(1, 0, 0);
-        //     actuatorClient->sendCommand(2, 0, 0);
-        // }
-        // else{
-        //     actuatorClient->sendCommand(0, 0, 0);
-        //     actuatorClient->sendCommand(1, 0, 0);
-        //     actuatorClient->sendCommand(2, 0, 0);
-        // }
 
+        if(game_on) {
+            //GOLEIRO AZUL
+            if(ball.x() <= 40 && ball.y() >= 28 && ball.y() <= 102)
+            {
+                Objective defensor = defineObjective(robot0, ball);
+                PID(robot0, defensor, 0, actuatorClient, Team_UFRBots, 0);
+            }
+
+
+        }
+        else{
+            actuatorClient->sendCommand(0, 0, 0);
+            actuatorClient->sendCommand(1, 0, 0);
+            actuatorClient->sendCommand(2, 0, 0);
+        }
 
 
         // Stop timer
