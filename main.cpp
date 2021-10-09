@@ -261,7 +261,7 @@ int main(int argc, char *argv[]) {
     width = 1.3 / 2.0;
     length = 1.7 / 2.0;
 
-    bool debug = true;
+    bool debug = false;
 
     fira_message::Ball ball;
     fira_message::Robot robot0;
