@@ -520,7 +520,7 @@ int main(int argc, char *argv[]) {
 
 //                                Se robo 2 no campo de defesa e bola no lado esquerdo
                         else if(ball.y() >= 64 && ball.x() <= 85 && i == 2) {
-                            Objective marcadorRecuado = Objective(ball.x(), 37, 0);
+                            Objective marcadorRecuado = Objective(ball.x(), 25, 0);
                             PID(robot2, marcadorRecuado, i, actuatorClient, Team_UFRBots, 0);
                         }
 
