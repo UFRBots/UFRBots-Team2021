@@ -514,20 +514,20 @@ int main(int argc, char *argv[]) {
 
 //                                Se robo 1 no campo de ataque e bola no lado direito
                         else if(ball.y() < 64 && ball.x() > 85 && i == 1 && !penalty) {
-                            Objective marcadorAvancado = Objective((ball.x()-20), 96, 0);
+                            Objective marcadorAvancado = Objective((ball.x()-10), 96, 0);
                             PID(robot1, marcadorAvancado, i, actuatorClient, Team_UFRBots, 0);
                         }
 
 //                                Se robo 2 no campo de defesa e bola no lado esquerdo
                         else if(ball.y() >= 64 && ball.x() <= 85 && i == 2) {
-                            Objective marcadorRecuado = Objective(ball.x(), 32, 0);
+                            Objective marcadorRecuado = Objective(ball.x(), 37, 0);
                             PID(robot2, marcadorRecuado, i, actuatorClient, Team_UFRBots, 0);
                         }
 
 //                                Se robo 2 no campo de ataque e bola no lado esquerdo
 //                                mas antes da pequena area
                         else if(ball.y() >= 64 && ball.x() > 85 && ball.x() <= 125 && i == 2) {
-                            Objective marcadorRecuado = Objective((ball.x()-20), 32, 0);
+                            Objective marcadorRecuado = Objective((ball.x()-10), 32, 0);
                             PID(robot2, marcadorRecuado, i, actuatorClient, Team_UFRBots, 0);
                         }
 
